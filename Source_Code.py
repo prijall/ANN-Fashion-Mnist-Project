@@ -38,7 +38,40 @@ class Dense_Layer:
                 dL1=np.ones_like(self.biases)
                 dL1[self.biases<0]=-1
                 self.dbiases+=self.biases_regularizer_L1*dL1
-                
+
+            if self.weight_regularizer_L2>0:
+                self.dweights+=2*self.weight_regularizer_L2 * self.weights
+            
+            if self.bias_regularizer_L2>0:
+                self.dbiases+=2*self.bias_regularizer_L2*self.biases
+
+            
+            # Gradient on values:
+            self.dinputs=np.dot(dvalues, self.weights.T)
+
+
+#@ Dropout Layer:
+class Dropout_Layer:
+
+    def __init__(self, rate):
+        self.rate=1-rate
+
+    # Forward Pass:
+    def forward(self, inputs, training):
+    #saving the inputs:
+      self.inputs=inputs
+
+    # In case of training only:
+      if not training:
+          self.output=inputs.copy()
+          return
+      
+      self.binary_mask=np.random.binomial(1, self.rate, size=inputs.shape)/self.rate   
+      self.output=inputs*self.binary_mask   
+
+    # Backward Pass:
+    def backward(self, dvalues):
+        self.dinputs=dvalues*self.binary_mask       
 
         
  

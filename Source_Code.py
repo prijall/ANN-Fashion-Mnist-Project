@@ -195,3 +195,59 @@ class Adam_Optimizer:
     # Call once after parameter update:
     def post_update_params(self):
         self.iterations+=1
+
+
+#@ Loss:
+class Loss:
+    def regularization_loss(self):
+        regularization_loss=0 #by default
+        for layer in self.trainable_layers:
+            if layer.weight_regularizer_l1>0:
+                regularization_loss+=layer.regularizer_l1*np.sum(np.abs(layer.weights))
+            
+            if layer.weight_regularizer_l2>0:
+                regularization_loss+=layer.weight_regularizer_l2 * np.sum(layer.weights * layer.weights)
+
+            if layer.bias_regularizer_l1>0:
+                regularization_loss+=layer.bias_regularizer_l1 * np.sum(np.abs(layer.biases))
+            
+            if layer.bias_regularizer_l2>0:
+                regularization_loss+=layer.bias_regularizer_l2* np.sum(layer.biases*np.biases)
+
+
+            return regularization_loss
+    
+    #for remembering trainable params:
+    def remember_trainable_layers(self, trainable_layers):
+        self.trainable_layers=trainable_layers
+
+
+    #for calculation:
+    def calculate(self, output, y, *, include_regualarization=False):
+        sample_losses=self.forward(output, y)
+        data_loss=np.mean(sample_losses)
+
+        #adding accumulated sum of losses and sample count:
+        self.accumulated_sum += np.sum(sample_losses)
+        self.accumulated_count+=len(sample_losses)
+
+        if not include_regualarization:
+            return data_loss
+        
+        return data_loss, self.regularization_loss()
+    
+    #for calculating accumulated loss:
+    def calculate_accumulated(self, *, include_regularization=False):
+        data_loss=self.accumulated_sum/self.accumulated_count
+
+        if not include_regularization:
+            return data_loss
+        
+    
+        return data_loss, self.regularization_loss()
+    
+
+    #For reseting variables for accumulated loss:
+    def new_pass(self):
+        self.accumulated_sum=0
+        self.accumulated_count=0

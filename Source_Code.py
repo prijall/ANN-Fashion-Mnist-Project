@@ -36,10 +36,10 @@ class Dense_Layer:
                 dL1[self.weights<0]=-1
                 self.dweights+=self.weight_regularizer_L1*dL1
             
-            if self.biases_regularizer_L1>0:
+            if self.bias_regularizer_L1>0:
                 dL1=np.ones_like(self.biases)
                 dL1[self.biases<0]=-1
-                self.dbiases+=self.biases_regularizer_L1*dL1
+                self.dbiases+=self.bias_regularizer_L1*dL1
 
             if self.weight_regularizer_L2>0:
                 self.dweights+=2*self.weight_regularizer_L2 * self.weights
@@ -119,7 +119,7 @@ class Softmax_activation:
             self.dinputs[index]=np.dot(jacobian_matrix, single_dvalues)
      
       #prediction for output:
-    def prediction(self, outputs):
+    def predictions(self, outputs):
         return np.argmax(outputs, axis=1)
 
 #@ Sigmoid Activation:
@@ -179,14 +179,14 @@ class Adam_Optimizer:
             layer.bias_cache=np.zeros_like(layer.biases)
         
         #Update momentum with current gradients:
-        layer.weight_momentums=self.beta_1 *layer.weight_momentum + (1 - self.beta_1)*layer.dweights
-        layer.bias_momentums=self.beta_1 *layer.bias_momentum + (1 - self.beta_1)*layer.dbiases
+        layer.weight_momentums=self.beta_1 *layer.weight_momentums + (1 - self.beta_1)*layer.weights
+        layer.bias_momentums=self.beta_1 *layer.bias_momentums + (1 - self.beta_1)*layer.biases
 
         weight_momentums_corrected=layer.weight_momentums / (1- self.beta_1 ** (self.iterations+1))
         bias_momentums_corrected=layer.bias_momentums / (1- self.beta_1 ** (self.iterations+1))
 
-        layer.weight_cache=self.beta_2 * layer.weight_cache + (1 - self.beta_2) * layer.dweights**2
-        layer.bias_cache = self.beta_2 * layer.bias_cache +  (1 - self.beta_2) * layer.dbiases**2
+        layer.weight_cache=self.beta_2 * layer.weight_cache + (1 - self.beta_2) * layer.weights**2
+        layer.bias_cache = self.beta_2 * layer.bias_cache +  (1 - self.beta_2) * layer.biases**2
 
         # Get corrected cache
         weight_cache_corrected = layer.weight_cache / (1 - self.beta_2 ** (self.iterations + 1))
@@ -208,17 +208,17 @@ class Loss:
     def regularization_loss(self):
         regularization_loss=0 #by default
         for layer in self.trainable_layers:
-            if layer.weight_regularizer_l1>0:
-                regularization_loss+=layer.regularizer_l1*np.sum(np.abs(layer.weights))
+            if layer.weight_regularizer_L1>0:
+                regularization_loss+=layer.regularizer_L1*np.sum(np.abs(layer.weights))
             
-            if layer.weight_regularizer_l2>0:
-                regularization_loss+=layer.weight_regularizer_l2 * np.sum(layer.weights * layer.weights)
+            if layer.weight_regularizer_L2>0:
+                regularization_loss+=layer.weight_regularizer_L2 * np.sum(layer.weights * layer.weights)
 
-            if layer.bias_regularizer_l1>0:
-                regularization_loss+=layer.bias_regularizer_l1 * np.sum(np.abs(layer.biases))
+            if layer.bias_regularizer_L1>0:
+                regularization_loss+=layer.bias_regularizer_L1 * np.sum(np.abs(layer.biases))
             
-            if layer.bias_regularizer_l2>0:
-                regularization_loss+=layer.bias_regularizer_l2* np.sum(layer.biases*np.biases)
+            if layer.bias_regularizer_L2>0:
+                regularization_loss+=layer.bias_regularizer_L2* np.sum(layer.biases*np.biases)
 
 
             return regularization_loss
@@ -229,7 +229,7 @@ class Loss:
 
 
     #for calculation:
-    def calculate(self, output, y, *, include_regualarization=False):
+    def calculate(self, output, y, *, include_regularization=False):
         sample_losses=self.forward(output, y)
         data_loss=np.mean(sample_losses)
 
@@ -237,7 +237,7 @@ class Loss:
         self.accumulated_sum += np.sum(sample_losses)
         self.accumulated_count+=len(sample_losses)
 
-        if not include_regualarization:
+        if not include_regularization:
             return data_loss
         
         return data_loss, self.regularization_loss()
@@ -303,11 +303,11 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
             if len(y_true.shape) == 2:
                 y_true = np.argmax(y_true, axis=1)
             # Copy so we can safely modify
-                self.dinputs = dvalues.copy()
+            self.dinputs = dvalues.copy()
             # Calculate gradient
-                self.dinputs[range(samples), y_true] -= 1
+            self.dinputs[range(samples), y_true] -= 1
             # Normalize gradient
-                self.dinputs = self.dinputs / samples
+            self.dinputs = self.dinputs / samples
 
 
             # Binary cross-entropy loss
@@ -661,5 +661,4 @@ accuracy=Accuracy_Categorical()
 # Finalize the model
 model.finalize()
 # Train the model
-model.train(X, y, validation_data=(X_test, y_test),
-epochs=10, batch_size=128, print_every=100)
+model.train(X, y, validation_data=(X_test, y_test), epochs=10, batch_size=128, print_every=100)

@@ -50,6 +50,15 @@ class Dense_Layer:
             
             # Gradient on values:
             self.dinputs=np.dot(dvalues, self.weights.T)
+    
+    #@ Retreiving layer parameters:
+    def  get_parameters(self):
+        return self.weights, self.biases
+    
+    #@ Setting weights and biases in layer instance:
+    def set_parameters(self, parameters):
+        for parameter_set, layer in zip(parameters, self.trainable_layers):
+            layer.set_parameters(*parameter_set)
 
 
 #@ Dropout Layer:
@@ -423,25 +432,14 @@ class Model:
                 self.layers[i].prev = self.layers[i-1]
                 self.layers[i].next = self.loss
                 self.output_layer_activation = self.layers[i]
-                # If layer contains an attribute called "weights",
-                # it's a trainable layer -
-                # add it to the list of trainable layers
-                # We don't need to check for biases -
-                # checking for weights is enough
+             
             if hasattr(self.layers[i], 'weights'):
                 self.trainable_layers.append(self.layers[i])
-                # Update loss object with trainable layers
-                self.loss.remember_trainable_layers(
-                self.trainable_layers
-                )
-                # If output activation is Softmax and
-                # loss function is Categorical Cross-Entropy
-                # create an object of combined activation
-                # and loss function containing
-                # faster gradient calculation
+              
+            if self.loss is not None:
+             self.loss.remember_trainable_layers(self.trainable_layers)
+             
             if isinstance(self.layers[-1], Softmax_activation) and isinstance(self.loss, Loss_CategoricalCrossentropy):
-                # Create an object of combined activation
-                # and loss functions
                 self.softmax_classifier_output = Activation_Softmax_Loss_CategoricalCrossentropy()
                   
 # Train the model
